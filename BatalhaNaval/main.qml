@@ -2,6 +2,7 @@ import QtQuick 2.14
 import QtQuick.Window 2.14
 import QtWebSockets 1.1
 import QtQuick.Controls 2.12
+import Qt.labs.settings 1.1
 
 Window {
     visible: true
@@ -10,6 +11,50 @@ Window {
     title: qsTr("Jogo Batalha Naval")
     visibility: Window.Maximized
     property int totalJogador:0
+    property var socketCliente
+
+    Settings{
+        category: "Batalha Naval"
+        fileName: "config.ini"
+
+        property alias ip: ip.text
+    }
+
+    function envia(mensagem){
+        if(socket.active){
+            socket.sendTextMessage(mensagem)
+            return
+        }
+        if(socketCliente)
+            socketCliente.sendTextMessage(mensagem)
+    }
+
+    function recebe(mensagem){
+        var obj = JSON.parse(mensagem)
+        if(obj.tipo==="acao"){
+            var objResposta = {}
+            objResposta.tipo = "valor"
+            objResposta.valor = JSON.stringify(dadosJogador.get(obj.indice))
+            objResposta.indice = obj.indice
+            objResposta.venceu = obj.total+dadosJogador.get(obj.indice).valor===totalJogador
+
+            if(objResposta.venceu){
+                venceu.text=qsTr("Perdedor!")
+                venceu.color="red"
+                venceu.visible=true
+                jogo.visible=false
+            }
+
+            envia(JSON.stringify(objResposta))
+        }else if(obj.tipo === "valor"){
+            dadosOponente.remove(obj.indice)
+            dadosOponente.insert(obj.indice,JSON.parse(obj.valor))
+            if(obj.venceu){
+                venceu.visible=true
+                jogo.visible=false
+            }
+        }
+    }
 
     WebSocketServer {
         id: server
@@ -20,20 +65,9 @@ Window {
         onClientConnected: {
             jogo.visible=true
             campoIP.visible=false
+            socketCliente=webSocket
             webSocket.onTextMessageReceived.connect(function (message) {
-                var obj = JSON.parse(message)
-                var objResposta = {}
-                objResposta.tipo = "valor"
-                objResposta.valor = JSON.stringify(dadosJogador.get(obj.indice))
-                objResposta.indice = obj.indice
-                objResposta.venceu = obj.total+dadosJogador.get(obj.indice).valor===totalJogador
-
-                if(objResposta.venceu){
-                    venceu.text=qsTr("Perdedor!")
-                    venceu.color="red"
-                }
-
-                webSocket.sendTextMessage(JSON.stringify(objResposta))
+                recebe(message)
             })
         }
         onErrorStringChanged: {
@@ -48,18 +82,7 @@ Window {
         id: socket
         active: false
 
-        onTextMessageReceived: {
-            var obj = JSON.parse(message)
-            if(obj.tipo === "valor"){
-                dadosOponente.remove(obj.indice)
-                dadosOponente.insert(obj.indice,JSON.parse(obj.valor))
-                if(obj.venceu){
-                    venceu.visible=true
-                    gridJogador.visible=false
-                    gridOponente.visible=false
-                }
-            }
-        }
+        onTextMessageReceived: recebe(message)
 
         onStatusChanged: {
             if(socket.status == WebSocket.Error){
@@ -164,27 +187,28 @@ Window {
                             anchors.fill: parent
                             onClicked: {
                                 var obj = {}
+                                obj.tipo = "acao"
                                 obj.indice = index
                                 obj.total = 0
                                 for(var i=0;i<dadosOponente.count;i++){
                                     if(dadosOponente.get(i).valor===1)
                                         obj.total++
                                 }
-                                socket.sendTextMessage(JSON.stringify(obj))
+                                envia(JSON.stringify(obj))
                             }
                         }
                     }
                 }
             }
-        }
-        Text {
-            id: venceu
-            anchors.centerIn: parent
-            text: qsTr("Vencedor!")
-            color: "green"
-            font.bold: true
-            font.pixelSize: 30
-            visible: false
-        }
+        }   
+    }
+    Text {
+        id: venceu
+        anchors.centerIn: parent
+        text: qsTr("Vencedor!")
+        color: "green"
+        font.bold: true
+        font.pixelSize: 30
+        visible: false
     }
 }

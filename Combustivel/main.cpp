@@ -5,9 +5,9 @@ int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
-    QCoreApplication::setApplicationName("Batalha Naval");
-    QCoreApplication::setOrganizationName("Aplicações Móveis");
-    QCoreApplication::setOrganizationDomain("br.com.aplicacoes_moveis");
+    QCoreApplication::setApplicationName("Combustivel");
+    QCoreApplication::setOrganizationName("UNIVAG");
+    QCoreApplication::setOrganizationDomain("br.com.univag");
 
     QGuiApplication app(argc, argv);
 
