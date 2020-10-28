@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>agua.png</file>
+        <file>barco1.png</file>
+        <file>barco2.png</file>
+        <file>barco3.png</file>
+        <file>barco4.png</file>
+    </qresource>
+</RCC>
