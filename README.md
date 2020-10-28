@@ -1,2 +1,2 @@
 # Aplicacoes-Moveis
-Códigos das aulas de aplicações móveis
+Códigos das aulas de aplicações móveis e outros
